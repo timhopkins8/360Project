@@ -1,0 +1,186 @@
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:37
+%Perform a bubblesort (bubblesort.asm			     Page 1 - 1
+
+
+				TITLE Perform a bubblesort (bubblesort.asm)
+
+				; This program sorts an array of 32-bit integers
+
+				INCLUDE Project.inc
+			      C ; "library" routines for handling 
+			      C .386		; 368 only instructions
+			      C .MODEL flat, stdcall
+			      C 
+			      C .stack 4096				; define default stack size
+			      C 
+			      C ; EBX = Xi
+			      C ; EAX = Yi
+			      C 
+ 00000000		      C .code
+ = 00000020		      C IntCrLf			EQU		20h
+ = 00000021		      C IntReadInt		EQU		21h
+ = 00000022		      C IntWriteInt		EQU		22h
+ = 00000023		      C IntWriteString	EQU		23h
+ = 00000024		      C IntExitProcess	EQU		24h
+ = 00000025		      C IntRandomRange	EQU	 	25h
+			      C 
+			      C ; create wrappers for the interrupt calls
+ 00000000		      C CrLf	PROC
+ 00000000  CD 20	      C 		int		IntCrLf
+ 00000002  C3		      C 		ret
+ 00000003		      C CrLf	ENDP
+			      C 
+ 00000003		      C ReadInt	PROC
+ 00000003  CD 21	      C 		int		IntReadInt
+ 00000005  C3		      C 		ret
+ 00000006		      C ReadInt	ENDP
+			      C 
+ 00000006		      C WriteInt	PROC
+ 00000006  CD 22	      C 		int		IntWriteInt
+ 00000008  C3		      C 		ret
+ 00000009		      C WriteInt	ENDP
+			      C 
+ 00000009		      C WriteString	PROC
+ 00000009  CD 23	      C 		int		IntWriteString
+ 0000000B  C3		      C 		ret
+ 0000000C		      C WriteString	ENDP
+			      C 
+ 0000000C		      C ExitProcess	PROC
+ 0000000C  CD 24	      C 		int		IntExitProcess
+ 0000000E  C3		      C 		ret
+ 0000000F		      C ExitProcess	ENDP
+			      C 
+ 0000000F		      C RandomRange	PROC
+ 0000000F  CD 25	      C 		int		IntRandomRange
+ 00000011  C3		      C 		ret
+ 00000012		      C RandomRange	ENDP
+			      C 
+			      C ; "exit" macro
+			      C exit MACRO
+			      C 		int	intExitProcess
+			      C ENDM
+			      C 
+
+ 00000000			.data
+ = 00000014			ASIZE = 20
+ 00000000  00000014 [		array	DWORD	ASIZE dup (0)
+	    00000000
+	   ]
+
+ 00000012			.code
+ 00000012			main	PROC
+				; generate 20 random numbers
+ 00000012  BB 00000000			mov	ebx,0
+ 00000017			gennum:
+ 00000017  B8 000003E8			mov	eax,1000				; get numbers 0 to 999
+ 0000001C  E8 FFFFFFEE			call	RandomRange
+ 00000021  89 83 00000000 R		mov	array[ebx],eax			; save in the array
+ 00000027  83 C3 04			add	ebx,4					; move to next items
+ 0000002A  83 FB 50			cmp	ebx,ASIZE*4				; done generating numbers?
+ 0000002D  7C E8			jl	gennum
+					
+ 0000002F			again:
+				; sort the numbers using bubblesort
+ 0000002F  B9 0000004C			mov	ecx,(sizeof array)-4	; get the size of the array (6*4) minus one element
+ 00000034  BE 00000000			mov	esi,0			; start loop
+ 00000039  BF 00000000			mov	edi,0			; note we haven't swapped anything
+
+				; compare two consecutive numbers in the array
+ 0000003E			comp:
+ 0000003E  8B 86 00000000 R		mov	eax,array[esi]		; get the first value
+ 00000044  3B 86 00000004 R		cmp	eax,array+4[esi]	; compare to the second
+ 0000004A  7E 17			jle	inorder
+
+				; need to swap the items
+ 0000004C  8B 9E 00000004 R		mov	ebx,array+4[esi]	; get the second number
+ 00000052  89 9E 00000000 R		mov	array[esi],ebx		; save the new first number
+ 00000058  89 86 00000004 R		mov	array+4[esi],eax	; save the new second number
+ 0000005E  BF 00000001			mov	edi,1			; note a swap occurred
+
+ 00000063			inorder:
+ 00000063  83 C6 04			add	esi,4			; increment the counter
+ 00000066  3B F1			cmp	esi,ecx			; at the end of the array?
+ 00000068  7C D4			jl	comp
+
+				; if we did any swaps, need to do another pass throught the array
+ 0000006A  83 FF 01			cmp	edi,1
+ 0000006D  74 C0			je	again
+
+				; display the result
+ 0000006F  BE 00000000			mov	esi,0			; initialize counter
+ 00000074  8B 86 00000000 R	dloop:	mov	eax,array[esi]		; get the next number
+ 0000007A  E8 FFFFFF87			call	WriteInt		; display result (value in EAX)
+ 0000007F  E8 FFFFFF7C			call	CrLf
+ 00000084  83 C6 04			add	esi,4			; move to next value
+ 00000087  3B F1			cmp	esi,ecx			; at the end of the array?
+ 00000089  7E E9			jle	dloop
+
+					exit
+ 0000008B  CD 24	     1			int	intExitProcess
+ 0000008D			main	ENDP
+				END	main
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:37
+%Perform a bubblesort (bubblesort.asm			     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+exit . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 DWord	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000050 DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 0000008D DWord	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CrLf . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000003 Public STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 0000000C _TEXT	Length= 00000003 Public STDCALL
+RandomRange  . . . . . . . . . .	P Near	 0000000F _TEXT	Length= 00000003 Public STDCALL
+ReadInt  . . . . . . . . . . . .	P Near	 00000003 _TEXT	Length= 00000003 Public STDCALL
+WriteInt . . . . . . . . . . . .	P Near	 00000006 _TEXT	Length= 00000003 Public STDCALL
+WriteString  . . . . . . . . . .	P Near	 00000009 _TEXT	Length= 00000003 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000012 _TEXT	Length= 0000007B Public STDCALL
+  gennum . . . . . . . . . . . .	L Near	 00000017 _TEXT	
+  again  . . . . . . . . . . . .	L Near	 0000002F _TEXT	
+  comp . . . . . . . . . . . . .	L Near	 0000003E _TEXT	
+  inorder  . . . . . . . . . . .	L Near	 00000063 _TEXT	
+  dloop  . . . . . . . . . . . .	L Near	 00000074 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+ASIZE  . . . . . . . . . . . . .	Number	 00000014h   
+IntCrLf  . . . . . . . . . . . .	Number	 00000020h   
+IntExitProcess . . . . . . . . .	Number	 00000024h   
+IntRandomRange . . . . . . . . .	Number	 00000025h   
+IntReadInt . . . . . . . . . . .	Number	 00000021h   
+IntWriteInt  . . . . . . . . . .	Number	 00000022h   
+IntWriteString . . . . . . . . .	Number	 00000023h   
+array  . . . . . . . . . . . . .	DWord	 00000000 _DATA	
+
+	   0 Warnings
+	   0 Errors

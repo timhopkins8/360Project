@@ -1,0 +1,196 @@
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:52
+'Check for a valid number (CheckNum.asm			     Page 1 - 1
+
+
+				TITLE Check for a valid number (CheckNum.asm)
+
+				; Check if we have a number of the form 123.456
+
+				INCLUDE Project.inc
+			      C ; "library" routines for handling 
+			      C .386		; 368 only instructions
+			      C .MODEL flat, stdcall
+			      C 
+			      C .stack 4096				; define default stack size
+			      C 
+			      C ; EBX = Xi
+			      C ; EAX = Yi
+			      C 
+ 00000000		      C .code
+ = 00000020		      C IntCrLf			EQU		20h
+ = 00000021		      C IntReadInt		EQU		21h
+ = 00000022		      C IntWriteInt		EQU		22h
+ = 00000023		      C IntWriteString	EQU		23h
+ = 00000024		      C IntExitProcess	EQU		24h
+ = 00000025		      C IntRandomRange	EQU	 	25h
+			      C 
+			      C ; create wrappers for the interrupt calls
+ 00000000		      C CrLf	PROC
+ 00000000  CD 20	      C 		int		IntCrLf
+ 00000002  C3		      C 		ret
+ 00000003		      C CrLf	ENDP
+			      C 
+ 00000003		      C ReadInt	PROC
+ 00000003  CD 21	      C 		int		IntReadInt
+ 00000005  C3		      C 		ret
+ 00000006		      C ReadInt	ENDP
+			      C 
+ 00000006		      C WriteInt	PROC
+ 00000006  CD 22	      C 		int		IntWriteInt
+ 00000008  C3		      C 		ret
+ 00000009		      C WriteInt	ENDP
+			      C 
+ 00000009		      C WriteString	PROC
+ 00000009  CD 23	      C 		int		IntWriteString
+ 0000000B  C3		      C 		ret
+ 0000000C		      C WriteString	ENDP
+			      C 
+ 0000000C		      C ExitProcess	PROC
+ 0000000C  CD 24	      C 		int		IntExitProcess
+ 0000000E  C3		      C 		ret
+ 0000000F		      C ExitProcess	ENDP
+			      C 
+ 0000000F		      C RandomRange	PROC
+ 0000000F  CD 25	      C 		int		IntRandomRange
+ 00000011  C3		      C 		ret
+ 00000012		      C RandomRange	ENDP
+			      C 
+			      C ; "exit" macro
+			      C exit MACRO
+			      C 		int	intExitProcess
+			      C ENDM
+			      C 
+
+ 00000000			.data
+ 00000000 45 6E 74 65 72	prompt	BYTE	"Enter a guess: ",0
+	   20 61 20 67 75
+	   65 73 73 3A 20
+	   00
+ 00000010 54 6F 6F 20 42	big	BYTE	"Too Big",13,10,0
+	   69 67 0D 0A 00
+ 0000001A 54 6F 6F 20 53	small	BYTE	"Too Small",13,10,0
+	   6D 61 6C 6C 0D
+	   0A 00
+ 00000026 54 68 65 20 6E	tries	BYTE	"The number of tries was ",0
+	   75 6D 62 65 72
+	   20 6F 66 20 74
+	   72 69 65 73 20
+	   77 61 73 20 00
+
+ 00000012			.code
+				; registers
+				;   ECX = count (# of guesses)
+				;   EAX = i (user's current guess)
+				;   EBX = answer (number we are trying to guess)
+ 00000012			main    PROC
+				; generate a random number from 1 to 100
+ 00000012  B8 00000064			mov	eax,100
+ 00000017  E8 FFFFFFF3			call	RandomRange		; get a number from 0 to 99
+ 0000001C  83 C0 01			add	eax,1			; make it 1 to 100
+ 0000001F  8B D8			mov	ebx,eax
+
+				; initialize count to 1 try
+ 00000021  B9 00000001			mov	ecx,1
+
+				; loop until the user gets the result correct
+ 00000026			make_guess:
+				; ask the user for a guess
+ 00000026  BA 00000000 R		mov	edx,offset prompt
+ 0000002B  E8 FFFFFFD9			call	WriteString
+ 00000030  E8 FFFFFFCE			call	ReadInt			; get guess
+
+				; did they get it right?
+ 00000035  3B C3			cmp	eax,ebx
+ 00000037  74 20			je	correct_ans
+ 00000039  7F 0F			jg	big_num
+
+				; their guess was smaller than the answer
+ 0000003B  BA 0000001A R		mov	edx,offset small
+ 00000040  E8 FFFFFFC4			call	WriteString
+ 00000045  83 C1 01			add	ecx,1			; increment count
+ 00000048  EB DC			jmp	make_guess
+
+				; their guess was larger than the answer
+ 0000004A			big_num:
+ 0000004A  BA 00000010 R		mov	edx,offset big
+ 0000004F  E8 FFFFFFB5			call	WriteString
+ 00000054  83 C1 01			add	ecx,1			; increment count
+ 00000057  EB CD			jmp	make_guess
+
+				; answer is correct, tell them how many guesses they made
+ 00000059			correct_ans:
+ 00000059  BA 00000026 R		mov	edx,offset tries
+ 0000005E  E8 FFFFFFA6			call	WriteString
+ 00000063  8B C1			mov	eax,ecx
+ 00000065  E8 FFFFFF9C			call	WriteInt		; display # guesses
+ 0000006A  E8 FFFFFF91			call	CrLf
+ 0000006F			done:    exit
+ 0000006F  CD 24	     1			int	intExitProcess
+ 00000071			main    ENDP
+				END    main
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:52
+'Check for a valid number (CheckNum.asm			     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+exit . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 DWord	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000003F DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000071 DWord	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CrLf . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000003 Public STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 0000000C _TEXT	Length= 00000003 Public STDCALL
+RandomRange  . . . . . . . . . .	P Near	 0000000F _TEXT	Length= 00000003 Public STDCALL
+ReadInt  . . . . . . . . . . . .	P Near	 00000003 _TEXT	Length= 00000003 Public STDCALL
+WriteInt . . . . . . . . . . . .	P Near	 00000006 _TEXT	Length= 00000003 Public STDCALL
+WriteString  . . . . . . . . . .	P Near	 00000009 _TEXT	Length= 00000003 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000012 _TEXT	Length= 0000005F Public STDCALL
+  make_guess . . . . . . . . . .	L Near	 00000026 _TEXT	
+  big_num  . . . . . . . . . . .	L Near	 0000004A _TEXT	
+  correct_ans  . . . . . . . . .	L Near	 00000059 _TEXT	
+  done . . . . . . . . . . . . .	L Near	 0000006F _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+IntCrLf  . . . . . . . . . . . .	Number	 00000020h   
+IntExitProcess . . . . . . . . .	Number	 00000024h   
+IntRandomRange . . . . . . . . .	Number	 00000025h   
+IntReadInt . . . . . . . . . . .	Number	 00000021h   
+IntWriteInt  . . . . . . . . . .	Number	 00000022h   
+IntWriteString . . . . . . . . .	Number	 00000023h   
+big  . . . . . . . . . . . . . .	Byte	 00000010 _DATA	
+prompt . . . . . . . . . . . . .	Byte	 00000000 _DATA	
+small  . . . . . . . . . . . . .	Byte	 0000001A _DATA	
+tries  . . . . . . . . . . . . .	Byte	 00000026 _DATA	
+
+	   0 Warnings
+	   0 Errors

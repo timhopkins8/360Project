@@ -1,0 +1,185 @@
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:58:15
+!Sieve of Eratosthenes (sieve.asm			     Page 1 - 1
+
+
+				TITLE Sieve of Eratosthenes (sieve.asm)
+
+				; Calculate primes using the Sieve of Eratosthenes
+
+				; This program adds and subtracts 32-bit integers
+				INCLUDE Project.inc
+			      C ; "library" routines for handling 
+			      C .386		; 368 only instructions
+			      C .MODEL flat, stdcall
+			      C 
+			      C .stack 4096				; define default stack size
+			      C 
+			      C ; EBX = Xi
+			      C ; EAX = Yi
+			      C 
+ 00000000		      C .code
+ = 00000020		      C IntCrLf			EQU		20h
+ = 00000021		      C IntReadInt		EQU		21h
+ = 00000022		      C IntWriteInt		EQU		22h
+ = 00000023		      C IntWriteString	EQU		23h
+ = 00000024		      C IntExitProcess	EQU		24h
+ = 00000025		      C IntRandomRange	EQU	 	25h
+			      C 
+			      C ; create wrappers for the interrupt calls
+ 00000000		      C CrLf	PROC
+ 00000000  CD 20	      C 		int		IntCrLf
+ 00000002  C3		      C 		ret
+ 00000003		      C CrLf	ENDP
+			      C 
+ 00000003		      C ReadInt	PROC
+ 00000003  CD 21	      C 		int		IntReadInt
+ 00000005  C3		      C 		ret
+ 00000006		      C ReadInt	ENDP
+			      C 
+ 00000006		      C WriteInt	PROC
+ 00000006  CD 22	      C 		int		IntWriteInt
+ 00000008  C3		      C 		ret
+ 00000009		      C WriteInt	ENDP
+			      C 
+ 00000009		      C WriteString	PROC
+ 00000009  CD 23	      C 		int		IntWriteString
+ 0000000B  C3		      C 		ret
+ 0000000C		      C WriteString	ENDP
+			      C 
+ 0000000C		      C ExitProcess	PROC
+ 0000000C  CD 24	      C 		int		IntExitProcess
+ 0000000E  C3		      C 		ret
+ 0000000F		      C ExitProcess	ENDP
+			      C 
+ 0000000F		      C RandomRange	PROC
+ 0000000F  CD 25	      C 		int		IntRandomRange
+ 00000011  C3		      C 		ret
+ 00000012		      C RandomRange	ENDP
+			      C 
+			      C ; "exit" macro
+			      C exit MACRO
+			      C 		int	intExitProcess
+			      C ENDM
+			      C 
+
+				; maximum number we are planning to check
+ = 000000C8			MAXVAL = 200
+ 00000000			.data
+ 00000000  000000C9 [		primelist DWORD	 MAXVAL+1 dup (1)		; create array, initialize to 1 (prime)
+	    00000001
+	   ]
+
+ 00000324 54 68 65 20 6C	res	BYTE	"The list of primes are:",13,10,0
+	   69 73 74 20 6F
+	   66 20 70 72 69
+	   6D 65 73 20 61
+	   72 65 3A 0D 0A
+	   00
+
+ 00000012			.code
+				; EBX = current tentative prime
+				; ECX = multiples of a prime
+ 00000012			main	PROC
+				; start the output
+ 00000012  BA 00000324 R		mov		edx,OFFSET res		; label our prime output
+ 00000017  E8 FFFFFFED			call		WriteString
+
+				; start scanning the array
+ 0000001C  BB 00000008			mov		ebx,2*4			; ignore 0, 1
+ 00000021			scan_lp: 
+ 00000021  8B BB 00000000 R		mov		edi,primelist[ebx]
+ 00000027  83 FF 01			cmp		edi,1			; is it prime?
+ 0000002A  75 27			jne		not_prime
+
+ 0000002C  8B C3			mov		EAX,EBX			; copy the prime
+ 0000002E  C1 E8 02			shr		eax,2			; divide by 4 to get actual prime
+ 00000031  E8 FFFFFFD0			call		WriteInt		; display this prime
+ 00000036  E8 FFFFFFC5			call		CrLf			; do it one per line
+
+				; mark off duplicates of the prime
+ 0000003B  8B CB			mov		ecx,ebx			; copy the prime*4
+ 0000003D  D1 E1			shl		ecx,1			; calc 2 * prime
+ 0000003F  33 FF			xor		edi,edi			; set edi to 0
+ 00000041			cancel_lp:
+ 00000041  81 F9 00000320		cmp		ecx,MAXVAL*4		; at/beyond the end of our array?
+ 00000047  73 0A			jae		not_prime		; if so, done here
+
+ 00000049  89 B9 00000000 R		mov		primelist[ecx],edi	; clear multiples of the prime
+ 0000004F  03 CB			add		ecx,ebx			; move to the next multiple
+ 00000051  EB EE			jmp		cancel_lp
+
+				; move on to the next number
+ 00000053			not_prime:
+ 00000053  83 C3 04			add		ebx,4			; move to next prime*4
+ 00000056  81 FB 00000320		cmp		ebx,MAXVAL*4		; are we done?
+ 0000005C  72 C3			jb		scan_lp
+
+					exit
+ 0000005E  CD 24	     1			int	intExitProcess
+ 00000060			main	ENDP
+				END	main
+
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:58:15
+!Sieve of Eratosthenes (sieve.asm			     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+exit . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 DWord	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000033E DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000060 DWord	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CrLf . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000003 Public STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 0000000C _TEXT	Length= 00000003 Public STDCALL
+RandomRange  . . . . . . . . . .	P Near	 0000000F _TEXT	Length= 00000003 Public STDCALL
+ReadInt  . . . . . . . . . . . .	P Near	 00000003 _TEXT	Length= 00000003 Public STDCALL
+WriteInt . . . . . . . . . . . .	P Near	 00000006 _TEXT	Length= 00000003 Public STDCALL
+WriteString  . . . . . . . . . .	P Near	 00000009 _TEXT	Length= 00000003 Public STDCALL
+main . . . . . . . . . . . . . .	P Near	 00000012 _TEXT	Length= 0000004E Public STDCALL
+  scan_lp  . . . . . . . . . . .	L Near	 00000021 _TEXT	
+  cancel_lp  . . . . . . . . . .	L Near	 00000041 _TEXT	
+  not_prime  . . . . . . . . . .	L Near	 00000053 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+IntCrLf  . . . . . . . . . . . .	Number	 00000020h   
+IntExitProcess . . . . . . . . .	Number	 00000024h   
+IntRandomRange . . . . . . . . .	Number	 00000025h   
+IntReadInt . . . . . . . . . . .	Number	 00000021h   
+IntWriteInt  . . . . . . . . . .	Number	 00000022h   
+IntWriteString . . . . . . . . .	Number	 00000023h   
+MAXVAL . . . . . . . . . . . . .	Number	 000000C8h   
+primelist  . . . . . . . . . . .	DWord	 00000000 _DATA	
+res  . . . . . . . . . . . . . .	Byte	 00000324 _DATA	
+
+	   0 Warnings
+	   0 Errors

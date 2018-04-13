@@ -1,0 +1,234 @@
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:56
+7Recursive solve the Towers of Hanoi puzzlle (hanoi.asm	     Page 1 - 1
+
+
+				TITLE Recursive solve the Towers of Hanoi puzzlle (hanoi.asm)
+
+				; This program adds two 32-bit integers
+				; Author: E. Styer
+				; Date 10/11/2002
+
+				INCLUDE Project.inc
+			      C ; "library" routines for handling 
+			      C .386		; 368 only instructions
+			      C .MODEL flat, stdcall
+			      C 
+			      C .stack 4096				; define default stack size
+			      C 
+			      C ; EBX = Xi
+			      C ; EAX = Yi
+			      C 
+ 00000000		      C .code
+ = 00000020		      C IntCrLf			EQU		20h
+ = 00000021		      C IntReadInt		EQU		21h
+ = 00000022		      C IntWriteInt		EQU		22h
+ = 00000023		      C IntWriteString	EQU		23h
+ = 00000024		      C IntExitProcess	EQU		24h
+ = 00000025		      C IntRandomRange	EQU	 	25h
+			      C 
+			      C ; create wrappers for the interrupt calls
+ 00000000		      C CrLf	PROC
+ 00000000  CD 20	      C 		int		IntCrLf
+ 00000002  C3		      C 		ret
+ 00000003		      C CrLf	ENDP
+			      C 
+ 00000003		      C ReadInt	PROC
+ 00000003  CD 21	      C 		int		IntReadInt
+ 00000005  C3		      C 		ret
+ 00000006		      C ReadInt	ENDP
+			      C 
+ 00000006		      C WriteInt	PROC
+ 00000006  CD 22	      C 		int		IntWriteInt
+ 00000008  C3		      C 		ret
+ 00000009		      C WriteInt	ENDP
+			      C 
+ 00000009		      C WriteString	PROC
+ 00000009  CD 23	      C 		int		IntWriteString
+ 0000000B  C3		      C 		ret
+ 0000000C		      C WriteString	ENDP
+			      C 
+ 0000000C		      C ExitProcess	PROC
+ 0000000C  CD 24	      C 		int		IntExitProcess
+ 0000000E  C3		      C 		ret
+ 0000000F		      C ExitProcess	ENDP
+			      C 
+ 0000000F		      C RandomRange	PROC
+ 0000000F  CD 25	      C 		int		IntRandomRange
+ 00000011  C3		      C 		ret
+ 00000012		      C RandomRange	ENDP
+			      C 
+			      C ; "exit" macro
+			      C exit MACRO
+			      C 		int	intExitProcess
+			      C ENDM
+			      C 
+
+ 00000000			.data
+ 00000000 48 6F 77 20 6D	pmt	BYTE	"How many disks? ",0
+	   61 6E 79 20 64
+	   69 73 6B 73 3F
+	   20 00
+ 00000011 54 6F 6F 20 6D	errmsg	BYTE	"Too many disks, quitting",13,10,0
+	   61 6E 79 20 64
+	   69 73 6B 73 2C
+	   20 71 75 69 74
+	   74 69 6E 67 0D
+	   0A 00
+ 0000002C 4D 6F 76 65 20	outmsg	BYTE	"Move disk: ",0
+	   64 69 73 6B 3A
+	   20 00
+ 00000038 20 66 72 6F 6D	frommsg	BYTE	" from post ",0
+	   20 70 6F 73 74
+	   20 00
+ 00000044 20 74 6F 20 70	tomsg	BYTE	" to post ",0
+	   6F 73 74 20 00
+
+ 00000012			.code
+				; inputs
+				; EAX - # of disks to move
+				; EBX - Post to move disks from
+				; ECX - Post to move disks to
+				; EDX - Temporary post
+ 00000012			hanoi	PROC
+ 00000012  55					push	ebp				; set up stack frame
+ 00000013  8B EC				mov		ebp,esp
+ 00000015  50					push	eax				; save counter
+ 00000016  53					push	ebx				; save from post
+ 00000017  51					push	ecx				; save to post
+ 00000018  52					push	edx				; save via post
+
+ 00000019  83 F8 00				cmp		eax,0			; 0 disks?
+ 0000001C  76 60				jbe		done			; nothing to do
+
+				; solve it recursively
+
+				; move the smaller disks out of the way
+				; call recursively for n-1, from, via, to
+ 0000001E  83 E8 01				sub		eax	,1			; one less disk
+ 00000021  8B 5D F8				mov		ebx,[ebp-8]		; get from pole
+ 00000024  8B 4D F0				mov		ecx,[ebp-16]	; move to via pole
+ 00000027  8B 55 F4				mov		edx,[ebp-12]	; use from as temp
+ 0000002A  E8 FFFFFFE3				call	hanoi
+
+				; move the biggest disk
+ 0000002F  BA 0000002C R			mov		edx,offset outmsg
+ 00000034  E8 FFFFFFD0				call		WriteString
+ 00000039  8B 45 FC				mov		eax,[ebp-4]		; get # of disks
+ 0000003C  E8 FFFFFFC5				call		WriteInt		; display disk #
+ 00000041  BA 00000038 R			mov		edx,offset frommsg
+ 00000046  E8 FFFFFFBE				call		WriteString
+ 0000004B  8B 45 F8				mov		eax,[ebp-8]		; get from pole
+ 0000004E  E8 FFFFFFB3				call		WriteInt
+ 00000053  BA 00000044 R			mov		edx,offset tomsg
+ 00000058  E8 FFFFFFAC				call		WriteString
+ 0000005D  8B 45 F4				mov		eax,[ebp-12]	; get to pole
+ 00000060  E8 FFFFFFA1				call		WriteInt
+ 00000065  E8 FFFFFF96				call		CrLF
+
+				; move the smaller disks to the destination
+				; call recursively for n-1, from, via, to
+ 0000006A  8B 45 FC				mov		eax,[ebp-4]		; get disk count again
+ 0000006D  83 E8 01				sub		eax,1			; one less disk
+ 00000070  8B 5D F0				mov		ebx,[ebp-16]	; from via pole
+ 00000073  8B 4D F4				mov		ecx,[ebp-12]	; move to destination
+ 00000076  8B 55 F8				mov		edx,[ebp-8]		; use from as temp
+ 00000079  E8 FFFFFF94				call	hanoi
+					
+ 0000007E			done:
+ 0000007E  5A					pop		edx				; restore post info
+ 0000007F  59					pop		ecx
+ 00000080  5B					pop		ebx
+ 00000081  58					pop		eax
+ 00000082  5D					pop		ebp				; remove stack frame
+ 00000083  C3					ret
+ 00000084			hanoi	ENDP
+
+ 00000084			main	PROC
+				; get the number of disks
+ 00000084  BA 00000000 R			mov		edx,offset pmt		; prepare to display prompt
+ 00000089  E8 FFFFFF7B				call		WriteString		; display prompt (addr in EDX)
+ 0000008E  E8 FFFFFF70				call		ReadInt			; get the first number (in EAX)
+ 00000093  83 F8 08				cmp		eax,8			; limit # of disks
+ 00000096  77 16				ja		errexit
+
+ 00000098  BB 00000001				mov		ebx,1			; from post 1
+ 0000009D  B9 00000002				mov		ecx,2			; to post 2
+ 000000A2  BA 00000003				mov		edx,3			; via post 3
+ 000000A7  E8 FFFFFF66				call	hanoi
+ 000000AC  EB 0A				jmp		done
+
+ 000000AE			errexit:
+ 000000AE  BA 00000011 R			mov		edx,offset errmsg	; let them know we won't do this
+ 000000B3  E8 FFFFFF51				call		Writestring
+ 000000B8			done:
+						exit
+ 000000B8  CD 24	     1			int	intExitProcess
+ 000000BA			main	ENDP
+				END	main
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:57:56
+7Recursive solve the Towers of Hanoi puzzlle (hanoi.asm	     Symbols 2 - 1
+
+
+
+
+Macros:
+
+                N a m e                 Type
+
+exit . . . . . . . . . . . . . .	Proc
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00001000 DWord	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 0000004E DWord	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 000000BA DWord	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CrLf . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000003 Public STDCALL
+ExitProcess  . . . . . . . . . .	P Near	 0000000C _TEXT	Length= 00000003 Public STDCALL
+RandomRange  . . . . . . . . . .	P Near	 0000000F _TEXT	Length= 00000003 Public STDCALL
+ReadInt  . . . . . . . . . . . .	P Near	 00000003 _TEXT	Length= 00000003 Public STDCALL
+WriteInt . . . . . . . . . . . .	P Near	 00000006 _TEXT	Length= 00000003 Public STDCALL
+WriteString  . . . . . . . . . .	P Near	 00000009 _TEXT	Length= 00000003 Public STDCALL
+hanoi  . . . . . . . . . . . . .	P Near	 00000012 _TEXT	Length= 00000072 Public STDCALL
+  done . . . . . . . . . . . . .	L Near	 0000007E _TEXT	
+main . . . . . . . . . . . . . .	P Near	 00000084 _TEXT	Length= 00000036 Public STDCALL
+  errexit  . . . . . . . . . . .	L Near	 000000AE _TEXT	
+  done . . . . . . . . . . . . .	L Near	 000000B8 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+IntCrLf  . . . . . . . . . . . .	Number	 00000020h   
+IntExitProcess . . . . . . . . .	Number	 00000024h   
+IntRandomRange . . . . . . . . .	Number	 00000025h   
+IntReadInt . . . . . . . . . . .	Number	 00000021h   
+IntWriteInt  . . . . . . . . . .	Number	 00000022h   
+IntWriteString . . . . . . . . .	Number	 00000023h   
+errmsg . . . . . . . . . . . . .	Byte	 00000011 _DATA	
+frommsg  . . . . . . . . . . . .	Byte	 00000038 _DATA	
+outmsg . . . . . . . . . . . . .	Byte	 0000002C _DATA	
+pmt  . . . . . . . . . . . . . .	Byte	 00000000 _DATA	
+tomsg  . . . . . . . . . . . . .	Byte	 00000044 _DATA	
+
+	   0 Warnings
+	   0 Errors

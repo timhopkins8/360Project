@@ -1,0 +1,175 @@
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:58:03
+Add and Subtract (AddSub.asm				     Page 1 - 1
+
+
+				TITLE Add and Subtract (AddSub.asm)
+
+				; This program adds and subtracts 32-bit integers
+				.686P		; Pentium Pro or later
+				.MODEL flat, stdcall
+
+				.stack 10000				; define default stack size
+
+ 00000000			.data
+ 00000000 00000021		Z	DWORD	33
+ 00000004  00000014 [		A	DWORD	20 dup(1)
+	    00000001
+	   ]
+ 00000000			.code
+ 00000000			main	PROC
+ 00000000  BB 00000000			mov		ebx,0
+ 00000005  B9 00000000			mov		ecx,0
+ 0000000A  03 C3		l1:	add		eax,ebx
+ 0000000C  03 D9			add		ebx,ecx
+ 0000000E  03 83 00000004 R		add		eax,A[ebx]
+ 00000014  03 99 00000004 R		add		ebx,A[ecx]
+ 0000001A  83 C0 63			add		eax,99
+ 0000001D  83 C3 63			add		ebx,99
+ 00000020  81 C3 0000270F		add		ebx,9999
+ 00000026  81 C3 000F423F		add		ebx,999999
+ 0000002C  03 05 00000000 R		add		eax,Z
+ 00000032  03 1D 00000000 R		add		ebx,Z
+
+ 00000038  23 C3			and		eax,ebx
+ 0000003A  23 D9			and		ebx,ecx
+ 0000003C  23 83 00000004 R		and		eax,A[ebx]
+ 00000042  23 99 00000004 R		and		ebx,A[ecx]
+ 00000048  83 E0 63			and		eax,99
+ 0000004B  83 E3 63			and		ebx,99
+ 0000004E  23 05 00000000 R		and		eax,Z
+ 00000054  23 1D 00000000 R		and		ebx,Z
+					
+ 0000005A  E8 00000019			call	l
+					
+ 0000005F  3B C3			cmp		eax,ebx
+ 00000061  3B D9			cmp		ebx,ecx
+ 00000063  3B 83 00000004 R		cmp		eax,A[ebx]
+ 00000069  3B 59 08			cmp		ebx,8[ecx]
+ 0000006C  83 F8 63			cmp		eax,99
+ 0000006F  83 FB 63			cmp		ebx,99
+ 00000072  3B 05 00000000 R		cmp		eax,Z
+ 00000078  3B 1D 00000000 R	l:	cmp		ebx,Z
+					
+ 0000007E  74 F8			je		l
+ 00000080  75 F6			jne		l
+ 00000082  7F F4			jg		l
+ 00000084  7D F2			jge		l
+ 00000086  7C F0			jl		l
+ 00000088  7E EE			jle		l
+ 0000008A  EB EC			jmp		l
+ 0000008C  E9 000000B0			jmp		l2
+					
+ 00000091  9F				LAHF
+ 00000092  9E				SAHF
+					
+ 00000093  8B C1			mov		eax,ecx
+ 00000095  8B D9			mov		ebx,ecx
+ 00000097  8B 46 08			mov		eax,8[esi]
+ 0000009A  8B 5E 08			mov		ebx,8[esi]
+ 0000009D  B8 00000063			mov		eax,99
+ 000000A2  BB 00000063			mov		ebx,99
+ 000000A7  A1 00000000 R		mov		eax,Z
+ 000000AC  8B 1D 00000000 R		mov		ebx,Z
+ 000000B2  89 47 08			mov		8[edi],eax
+ 000000B5  89 5F 08			mov		8[edi],ebx
+ 000000B8  A3 00000000 R		mov		Z,eax
+ 000000BD  89 1D 00000000 R		mov		Z,ebx
+					
+ 000000C3  F7 D8			neg		eax
+ 000000C5  F7 DB			neg		ebx
+					
+ 000000C7  F7 D0			not		eax
+ 000000C9  F7 D3			not		ebx
+					
+ 000000CB  0B C3			or		eax,ebx
+ 000000CD  0B D9			or		ebx,ecx
+ 000000CF  0B 43 08			or		eax,8[ebx]
+ 000000D2  0B 59 08			or		ebx,8[ecx]
+ 000000D5  83 C8 63			or		eax,99
+ 000000D8  83 CB 63			or		ebx,99
+ 000000DB  0B 05 00000000 R		or		eax,Z
+ 000000E1  0B 1D 00000000 R		or		ebx,Z
+					
+ 000000E7  58				pop		eax
+ 000000E8  5B				pop		ebx
+					
+ 000000E9  6A 63			push	99
+ 000000EB  68 0000270F			push	9999
+ 000000F0  68 000F423F			push	999999
+ 000000F5  50				push	eax
+ 000000F6  53				push	ebx
+					
+ 000000F7  C3				ret
+					
+ 000000F8  C1 E0 05			sal		eax,5
+ 000000FB  C1 E3 05			sal		ebx,5
+					
+ 000000FE  C1 F8 05			sar		eax,5
+ 00000101  C1 FB 05			sar		ebx,5
+					
+ 00000104  2B C3			sub		eax,ebx
+ 00000106  2B D9			sub		ebx,ecx
+ 00000108  2B 43 08			sub		eax,8[ebx]
+ 0000010B  2B 59 08			sub		ebx,8[ecx]
+ 0000010E  83 E8 63			sub		eax,99
+ 00000111  83 EB 63			sub		ebx,99
+ 00000114  2B 05 00000000 R		sub		eax,Z
+ 0000011A  2B 1D 00000000 R		sub		ebx,Z
+					
+ 00000120  33 C3			xor		eax,ebx
+ 00000122  33 D9			xor		ebx,ecx
+ 00000124  33 43 08			xor		eax,8[ebx]
+ 00000127  33 59 08			xor		ebx,8[ecx]
+ 0000012A  83 F0 63			xor		eax,99
+ 0000012D  83 F3 63			xor		ebx,99
+ 00000130  33 05 00000000 R		xor		eax,Z
+ 00000136  33 1D 00000000 R		xor		ebx,Z
+					
+ 0000013C  E8 FFFFFEC9			call	l1
+ 00000141  0F 85 FFFFFEC3	l2:	jne		l1
+ 00000147			main	ENDP
+				END	main
+Microsoft (R) Macro Assembler Version 12.00.30501.0	    03/29/18 10:58:03
+Add and Subtract (AddSub.asm				     Symbols 2 - 1
+
+
+
+
+Segments and Groups:
+
+                N a m e                 Size     Length   Align   Combine Class
+
+FLAT . . . . . . . . . . . . . .	GROUP
+STACK  . . . . . . . . . . . . .	32 Bit	 00002710 Para	  Stack	  'STACK'	 
+_DATA  . . . . . . . . . . . . .	32 Bit	 00000054 Para	  Public  'DATA'	
+_TEXT  . . . . . . . . . . . . .	32 Bit	 00000147 Para	  Public  'CODE'	
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+main . . . . . . . . . . . . . .	P Near	 00000000 _TEXT	Length= 00000147 Public STDCALL
+  l1 . . . . . . . . . . . . . .	L Near	 0000000A _TEXT	
+  l  . . . . . . . . . . . . . .	L Near	 00000078 _TEXT	
+  l2 . . . . . . . . . . . . . .	L Near	 00000141 _TEXT	
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+@CodeSize  . . . . . . . . . . .	Number	 00000000h   
+@DataSize  . . . . . . . . . . .	Number	 00000000h   
+@Interface . . . . . . . . . . .	Number	 00000003h   
+@Model . . . . . . . . . . . . .	Number	 00000007h   
+@code  . . . . . . . . . . . . .	Text   	 _TEXT
+@data  . . . . . . . . . . . . .	Text   	 FLAT
+@fardata?  . . . . . . . . . . .	Text   	 FLAT
+@fardata . . . . . . . . . . . .	Text   	 FLAT
+@stack . . . . . . . . . . . . .	Text   	 FLAT
+A  . . . . . . . . . . . . . . .	DWord	 00000004 _DATA	
+Z  . . . . . . . . . . . . . . .	DWord	 00000000 _DATA	
+
+	   0 Warnings
+	   0 Errors
