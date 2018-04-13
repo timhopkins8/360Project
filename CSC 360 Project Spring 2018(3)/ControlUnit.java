@@ -1,12 +1,37 @@
-public class OpCodeInterpreter {
+public class ControlUnit {
     private String listingLine;
     private String firstByteOpCode;
     private CPU386 cpu;
+    private ALU alu;
 
-    public OpCodeInterpreter(String listingLine, CPU386 cpu){
+    public ControlUnit(String listingLine, CPU386 cpu){
         this.listingLine = listingLine;
         setFirstByteOpCode();
         this.cpu = cpu;
+        alu = new ALU();
+    }
+
+    private int getRegisterFromOpCode(String bits){
+        switch(bits){
+            case "000":
+                return 0;
+            case "011":
+                return 1;
+            case "001":
+                return 2;
+            case "010":
+                return 3;
+            case "110":
+                return 4;
+            case "111":
+                return 5;
+            case "101":
+                return 6;
+            case "100":
+                return 7;
+            default:
+                return -1;
+        }
     }
 
     public void setFirstByteOpCode(){
@@ -17,19 +42,31 @@ public class OpCodeInterpreter {
 
     public void determineAction(){
         String firstFiveBits = firstByteOpCode.substring(0,5);
+        SimMemory memory = cpu.memory;
+        int regValues[] = cpu.regValues;
+        int EAX = cpu.EAX; int EBX = cpu.EBX; int ECX = cpu.ECX; int EDX = cpu.EDX; int EBP = cpu.EBP; int EDI = cpu.EDI; int ESP = cpu.ESP; int ESI = cpu.ESI;
 
         switch (firstFiveBits){
-            case "10111":
-                System.out.println("mov reg/const");
-                return;
-            case "01011":
-                System.out.println("pop register");
-                return;
-            case "01010":
-                System.out.println("Push reg");
-                return;
+            case "10111": //move reg/ const
+                int destinationRegisterIndex = getRegisterFromOpCode(firstByteOpCode.substring(5,8));
+                String const32Hex = listingLine.substring(13,21);
+                int const32Int = Integer.parseInt(const32Hex, 16);
+                regValues[destinationRegisterIndex] = const32Int;
+                break;
+            case "01011": // NEEDS TESTING pop register
+                regValues[ESP] -= 32; // decrement stack pointer
+                destinationRegisterIndex = getRegisterFromOpCode(firstByteOpCode.substring(5,8)); // get the index of the destination register
+                String value = memory.listingLines.get(regValues[ESP]); //get value off the stack
+                regValues[destinationRegisterIndex] = Integer.parseInt(value, 16); //put the value in the correct register
+                break;
+            case "01010": //NEEDS TESTING push reg
+                int sourceRegisterIndex = getRegisterFromOpCode(firstByteOpCode.substring(5,8)); // get the index of the source register
+                String hex = Integer.toHexString(regValues[sourceRegisterIndex]);   //convert the value in the source register to a hex string
+                memory.listingLines.put(regValues[ESP],  hex);      //put the hex string onto the stack
+                regValues[ESP] += 32;                               //increment the stack pointer
+                break;
             default :
-                System.out.println("Go to next Switch");
+                //
         }
 
         switch(firstByteOpCode){
@@ -98,8 +135,10 @@ public class OpCodeInterpreter {
             case "01101010":
                 System.out.println("push const8");
                 break;
-            case "01101000":
-                System.out.println("push const32");
+            case "01101000": //NEEDS REAL TEST push const 32
+                String const32Hex = listingLine.substring(13,21);   //get 32 bit const value in hex as a string
+                memory.listingLines.put(regValues[ESP], const32Hex); //put the string on the stack
+                regValues[ESP] += 32;                               //increment the stack pointer
                 break;
             case "11000011":
                 System.out.println("return");
@@ -115,31 +154,7 @@ public class OpCodeInterpreter {
                 System.out.println("xor, reg, reg");
                 break;
         }
+        cpu.regValues[cpu.EIP] = memory.listingLines.higherKey(cpu.regValues[cpu.EIP]);
+
     }
-
-    public void add(int val1, int val2, int destination){
-        cpu.regValues[destination] = val1 + val2;
-    }
-
-    public void subtract(int val1, int val2, int destination){
-        cpu.regValues[destination] = val1 - val2;
-    }
-
-    public void and(int val1, int val2, int destination){
-        cpu.regValues[destination] = val1 & val2;
-    }
-
-    public void or(int val1, int val2, int destination){
-        cpu.regValues[destination] = val1 | val2;
-    }
-
-    public void xor(int val1, int val2, int destination){
-        cpu.regValues[destination] = val1 ^ val2;
-    }
-
-    public void move(int val, int destination){
-        cpu.regValues[destination] = val;
-    }
-
-
 }

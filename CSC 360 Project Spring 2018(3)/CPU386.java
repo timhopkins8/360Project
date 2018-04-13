@@ -112,8 +112,8 @@ class CPU386 {
     public void emulateInstruction() throws Exception {
 
         String instruction = memory.listingLines.get(regValues[EIP]);
-        OpCodeInterpreter op = new OpCodeInterpreter(instruction, this);
-        op.determineAction();
+        ControlUnit controlUnit = new ControlUnit(instruction, this);
+        controlUnit.determineAction();
 
     } // emulateInstruction
 
